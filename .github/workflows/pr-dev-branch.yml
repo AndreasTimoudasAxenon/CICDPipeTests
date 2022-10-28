@@ -147,7 +147,7 @@ jobs:
               run: | 
                   mkdir changed-sources
                   DIFF=$(git rev-parse --short origin/HEAD)
-                  sfdx sgd:source:delta --to "HEAD" --from "echo ${DIFF}" --output changed-sources/ --generate-delta --source force-app/ 
+                  echo "sfdx sgd:source:delta --to "HEAD" --from "${DIFF}" --output changed-sources/ --generate-delta --source force-app/"
             # Now we can use the sfdx scanner to scan the code in the delta directory
             # The output of the scan is stored in a file called apexScanResults.sarif
 
