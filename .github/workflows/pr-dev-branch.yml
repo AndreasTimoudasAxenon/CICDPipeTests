@@ -142,6 +142,7 @@ jobs:
             # this allows us to deploy only those changes, as opposed to deploying the entire branch. 
             # This helps reducing deployment times
             - name: 'Create delta packages for new, modified or deleted metadata'
+              shell: bash
               run: | 
                   mkdir changed-sources
                   
