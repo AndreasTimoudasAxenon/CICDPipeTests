@@ -48,8 +48,9 @@ jobs:
             # to the destination org
 
             - name: 'Checkout source code'
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
+                ref: ${{ github.event.pull_request.head.sha }}
                 fetch-depth: 0
             
             # Now, we need a way to let the developer specify which tests to run, which
@@ -138,10 +139,11 @@ jobs:
             # Authenticate to org using the URL stored in the text file
             - name: 'Authenticate to Integration Org'
               run: sfdx auth:sfdxurl:store -f ./SFDX_DEV_URL.txt -s -a integration
+
               # Set diff from point 
             - name: 'Set diff FROM point'
               run: |
-                  echo "DIFF=$(git rev-parse --short origin/dev)" >> $GITHUB_ENV
+                  echo "DIFF=$(git log origin/dev..HEAD --reverse -n 1)" >> $GITHUB_ENV
             # We use SFDX Git Delta to create a directory with only the metadata that has changed.
             # this allows us to deploy only those changes, as opposed to deploying the entire branch. 
             # This helps reducing deployment times
