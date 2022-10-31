@@ -50,7 +50,6 @@ jobs:
             - name: 'Checkout source code'
               uses: actions/checkout@v3
               with:
-                ref: ${{ github.event.pull_request.head.sha }}
                 fetch-depth: 0
             
             # Now, we need a way to let the developer specify which tests to run, which
@@ -142,6 +141,7 @@ jobs:
 
               # Set diff from point 
             - name: 'Set diff FROM point'
+              shell: bash
               run: |
                   echo "DIFF=$(it log origin/dev..origin/feature-mult-commit --reverse -n 1 | awk 'NR==1 {print $2}')" >> $GITHUB_ENV
             # We use SFDX Git Delta to create a directory with only the metadata that has changed.
