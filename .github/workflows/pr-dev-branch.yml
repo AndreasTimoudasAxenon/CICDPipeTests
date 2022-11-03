@@ -84,32 +84,32 @@ jobs:
               # Finally, we add the list of tests to the $GITHUB_ENV variable
               # as this allows us to reference the list in a subsequent step.  If you
               # were using a normal env variable, its value would not be available outside this step.
-              run: |
-                  echo $PR_BODY > ./pr_body.txt
-                  node ./parsePR.js              
-                  TESTS=$(cat testsToRun.txt)       
-                  echo "APEX_TESTS=$TESTS" >> $GITHUB_ENV
+            #   run: |
+            #       echo $PR_BODY > ./pr_body.txt
+            #       node ./parsePR.js              
+            #       TESTS=$(cat testsToRun.txt)       
+            #       echo "APEX_TESTS=$TESTS" >> $GITHUB_ENV
                   
-            # Now Install Salesforce CLI
-            - name: 'Install Salesforce CLI'
-              run: |
-                  wget https://developer.salesforce.com/media/salesforce-cli/sfdx/channels/stable/sfdx-linux-x64.tar.xz
-                  mkdir ~/sfdx
-                  tar xJf sfdx-linux-x64.tar.xz -C ~/sfdx --strip-components 1
-                  echo "$HOME/sfdx/bin" >> $GITHUB_PATH
-                  ~/sfdx/bin/sfdx version
+            # # Now Install Salesforce CLI
+            # - name: 'Install Salesforce CLI'
+            #   run: |
+            #       wget https://developer.salesforce.com/media/salesforce-cli/sfdx/channels/stable/sfdx-linux-x64.tar.xz
+            #       mkdir ~/sfdx
+            #       tar xJf sfdx-linux-x64.tar.xz -C ~/sfdx --strip-components 1
+            #       echo "$HOME/sfdx/bin" >> $GITHUB_PATH
+            #       ~/sfdx/bin/sfdx version
             # Then we install the SFDX-Git-Delta plugin - https://github.com/scolladon/sfdx-git-delta
             # This is an awesome plugin that allows us to extract a package.xml with the metadata
             # that has changed between commits. I highly recommend going over the github readme 
             # for more information on how this works.
 
-            - name: 'Installing sfdx git delta'
-              run: | 
-                  echo y | sfdx plugins:install sfdx-git-delta
-                  sfdx plugins 
-            # Install java as it is required for the next step
-            - name: 'Installing java'
-              run: sudo apt-get install openjdk-8-jdk
+            # - name: 'Installing sfdx git delta'
+            #   run: | 
+            #       echo y | sfdx plugins:install sfdx-git-delta
+            #       sfdx plugins 
+            # # Install java as it is required for the next step
+            # - name: 'Installing java'
+            #   run: sudo apt-get install openjdk-8-jdk
 
             # Install SFDX scanner
             # - name: 'Installing SFDX scanner'
@@ -131,13 +131,13 @@ jobs:
 
             # The URL is stored in the Github Secret named SFDX_INTEGRATION_URL
             # so here we store the URL into a text file
-            - name: 'Populate auth file with SFDX_URL secret of integration org'
-              shell: bash
-              run: |
-                  echo ${{ secrets.SFDX_DEV_URL }} > ./SFDX_DEV_URL.txt
-            # Authenticate to org using the URL stored in the text file
-            - name: 'Authenticate to Integration Org'
-              run: sfdx auth:sfdxurl:store -f ./SFDX_DEV_URL.txt -s -a integration
+            # - name: 'Populate auth file with SFDX_URL secret of integration org'
+            #   shell: bash
+            #   run: |
+            #       echo ${{ secrets.SFDX_DEV_URL }} > ./SFDX_DEV_URL.txt
+            # # Authenticate to org using the URL stored in the text file
+            # - name: 'Authenticate to Integration Org'
+            #   run: sfdx auth:sfdxurl:store -f ./SFDX_DEV_URL.txt -s -a integration
 
               # Set diff from point 
             - name: 'Set diff FROM point'
@@ -148,14 +148,18 @@ jobs:
             - name: 'Get PR trigger branch ref'
               shell: bash
               run: |
-                  echo "${{ github.GITHUB_REF_NAME }}" 
+                  echo "GIT_REF_NAME=${github.GITHUB_REF_NAME}" >> $GITHUB_ENV
+                  echo "GIT_SHA=${GITHUB_SHA}" >> $GITHUB_ENV
+                  echo "GIT_BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV 
             # We use SFDX Git Delta to create a directory with only the metadata that has changed.
             # this allows us to deploy only those changes, as opposed to deploying the entire branch. 
             # This helps reducing deployment times
             - name: 'Create delta packages for new, modified or deleted metadata'
               run: | 
                   mkdir changed-sources
-                  echo "${{ env.TRIGGER_BRANCH }}"
+                  echo "GIT_SHA=${GIT_SHA}"
+                  echo "GIT_BRANCH=${GIT_BRANCH}"
+                  echo "GIT_REF_NAME=${GIT_REF_NAME}"
                   echo "git merge-base origin/dev ${{ github.GITHUB_REF_NAME }}"
                   sfdx sgd:source:delta --to "HEAD" --from ${{ env.DIFF }} --output changed-sources/ --generate-delta --source force-app/
             # Now we can use the sfdx scanner to scan the code in the delta directory
