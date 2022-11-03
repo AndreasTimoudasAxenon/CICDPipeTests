@@ -107,7 +107,7 @@ jobs:
             - name: 'Create delta packages for new, modified or deleted metadata'
               run: | 
                   mkdir changed-sources
-                  sfdx sgd:source:delta --to origin/dev --from ${{ env.FROM_POINT }} --output changed-sources/ --generate-delta --source force-app/ 
+                  sfdx sgd:source:delta --to "HEAD" --from ${{ env.FROM_POINT }} --output changed-sources/ --generate-delta --source force-app/ 
 
             - name: Show content of changed-sources
               shell: bash
