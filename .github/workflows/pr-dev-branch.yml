@@ -52,27 +52,64 @@ jobs:
               with:
                 fetch-depth: 0
             
+            - name: 'Read PR Body'
+              env:
+                # The pull request body is available through the github context object
+                # we put the body of the pull request in an env variable (only available to this step)
+                PR_BODY: ${{github.event.pull_request.body}}
 
-              # Set diff from point 
-            - name: 'Set diff FROM point'
+              run: |
+                  echo $PR_BODY > ./pr_body.txt
+                  node ./parsePR.js              
+                  TESTS=$(cat testsToRun.txt)       
+                  echo "APEX_TESTS=$TESTS" >> $GITHUB_ENV
+
+            # Now Install Salesforce CLI
+            - name: 'Install Salesforce CLI'
+              run: |
+                  wget https://developer.salesforce.com/media/salesforce-cli/sfdx/channels/stable/sfdx-linux-x64.tar.xz
+                  mkdir ~/sfdx
+                  tar xJf sfdx-linux-x64.tar.xz -C ~/sfdx --strip-components 1
+                  echo "$HOME/sfdx/bin" >> $GITHUB_PATH
+                  ~/sfdx/bin/sfdx version
+
+
+            - name: 'Installing sfdx git delta'
+              run: | 
+                  echo y | sfdx plugins:install sfdx-git-delta
+                  sfdx plugins 
+            # Install java as it is required for the next step
+            - name: 'Installing java'
+              run: sudo apt-get install openjdk-8-jdk
+
+
+            # The URL is stored in the Github Secret named SFDX_INTEGRATION_URL
+            # so here we store the URL into a text file
+            - name: 'Populate auth file with SFDX_URL secret of integration org'
               shell: bash
               run: |
-                  echo "DIFF=$(git log origin/dev..origin/feature-mult-commit --reverse -n 1 | awk 'NR==1 {print $2}')" >> $GITHUB_ENV
-            - name: 'Get PR trigger branch ref'
+                  echo ${{ secrets.SFDX_DEV_URL }} > ./SFDX_DEV_URL.txt
+            # Authenticate to org using the URL stored in the text file
+            - name: 'Authenticate to Integration Org'
+              run: sfdx auth:sfdxurl:store -f ./SFDX_DEV_URL.txt -s -a integration
+
+            - name: 'Get Name of Branch That trigger PR'
               shell: bash
               run: |
-                  echo "GIT_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
-                  echo "GIT_SHA=${GITHUB_SHA}" >> $GITHUB_ENV
-                  echo "GIT_BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV 
                   echo "SOURCE=${{github.head_ref}}" >> $GITHUB_ENV 
             # We use SFDX Git Delta to create a directory with only the metadata that has changed.
             # this allows us to deploy only those changes, as opposed to deploying the entire branch. 
             # This helps reducing deployment times
+            - name: 'Get feature branch first commit ref'
+              run: | 
+                  echo "FROM_POINT"=$(git merge-base origin/dev origin/${{ env.SOURCE }}) >> $GITHUB_ENV
+
             - name: 'Create delta packages for new, modified or deleted metadata'
               run: | 
                   mkdir changed-sources
-                  echo "GIT_SHA=${GIT_SHA}"
-                  echo "GIT_BRANCH=${GIT_BRANCH}"
-                  echo "GIT_NAME=${GIT_NAME}"
-                  echo "SOURCE=${SOURCE}"
-                  git merge-base origin/dev origin/${{ env.SOURCE }}
+                  sfdx sgd:source:delta --to origin/dev --from ${{ env.FROM_POINT }} --output changed-sources/ --generate-delta --source force-app/ 
+
+            - name: Show content of changed-sources
+              shell: bash
+              run: |
+                  ls -LR changed-sources/
