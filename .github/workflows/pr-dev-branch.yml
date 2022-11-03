@@ -148,7 +148,7 @@ jobs:
             - name: 'Get PR trigger branch ref'
               shell: bash
               run: |
-                  echo "TRIGGER_BRANCH=$(${{ github.GITHUB_REF_NAME}})"  >> $GITHUB_ENV
+                  echo "${{ github.GITHUB_REF_NAME }}" 
             # We use SFDX Git Delta to create a directory with only the metadata that has changed.
             # this allows us to deploy only those changes, as opposed to deploying the entire branch. 
             # This helps reducing deployment times
