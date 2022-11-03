@@ -144,6 +144,10 @@ jobs:
               shell: bash
               run: |
                   echo "DIFF=$(git log origin/dev..origin/feature-mult-commit --reverse -n 1 | awk 'NR==1 {print $2}')" >> $GITHUB_ENV
+                  
+            - name: 'Get PR trigger branch ref'
+              shell: bash
+              run: |
                   echo "TRIGGER_BRANCH"=$(${{ github.GITHUB_REF_NAME}})"  >> $GITHUB_ENV
             # We use SFDX Git Delta to create a directory with only the metadata that has changed.
             # this allows us to deploy only those changes, as opposed to deploying the entire branch. 
