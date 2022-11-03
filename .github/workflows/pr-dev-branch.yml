@@ -143,7 +143,8 @@ jobs:
             - name: 'Set diff FROM point'
               shell: bash
               run: |
-                  echo "DIFF=$(it log origin/dev..origin/feature-mult-commit --reverse -n 1 | awk 'NR==1 {print $2}')" >> $GITHUB_ENV
+                  echo "DIFF=$(git log origin/dev..origin/feature-mult-commit --reverse -n 1 | awk 'NR==1 {print $2}')" >> $GITHUB_ENV
+                  echo running on branch ${GITHUB_REF##*/}
             # We use SFDX Git Delta to create a directory with only the metadata that has changed.
             # this allows us to deploy only those changes, as opposed to deploying the entire branch. 
             # This helps reducing deployment times
@@ -151,6 +152,7 @@ jobs:
               run: | 
                   mkdir changed-sources
                   echo "${{ env.DIFF }}"
+                  echo git merge-base dev ${GITHUB_REF##*/}
                   sfdx sgd:source:delta --to "HEAD" --from ${{ env.DIFF }} --output changed-sources/ --generate-delta --source force-app/
             # Now we can use the sfdx scanner to scan the code in the delta directory
             # The output of the scan is stored in a file called apexScanResults.sarif
