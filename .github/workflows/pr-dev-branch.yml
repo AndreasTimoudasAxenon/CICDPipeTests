@@ -75,4 +75,4 @@ jobs:
                   echo "GIT_BRANCH=${GIT_BRANCH}"
                   echo "GIT_NAME=${GIT_NAME}"
                   echo "SOURCE=${SOURCE}"
-                  echo "git merge-base origin/dev ${{ github.GITHUB_REF_NAME }}"
+                  git merge-base origin/dev ${{ GIT_SHA }}
