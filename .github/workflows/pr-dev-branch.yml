@@ -64,7 +64,7 @@ jobs:
                   echo "GIT_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
                   echo "GIT_SHA=${GITHUB_SHA}" >> $GITHUB_ENV
                   echo "GIT_BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV 
-                  echo "SOURCE=${{github.event.pull_request.base.ref}}" >> $GITHUB_ENV 
+                  echo "SOURCE=${{github.event.head_ref}}" >> $GITHUB_ENV 
             # We use SFDX Git Delta to create a directory with only the metadata that has changed.
             # this allows us to deploy only those changes, as opposed to deploying the entire branch. 
             # This helps reducing deployment times
